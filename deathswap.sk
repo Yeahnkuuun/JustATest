@@ -1,0 +1,200 @@
+command /deathswap [<text>] [<text>]:
+	aliases: swap
+	trigger:
+		if arg-1 is not set:
+			send "&9&l&m--------------&9&l< &b&lDeathSwap &9&l>&9&l&m--------------"
+			send "&8Welcome to DeathSwap! I'm glad to see you :)"
+			send ""
+			send "&f&lGame <command:/deathswap game>&c&l[O]<reset>"
+			send "&f&lPairs <command:/deathswap pair>&c&l[O]<reset>"
+			send ""
+			send "&9&l&m--------------&9&l< &b&lDeathSwap &9&l>&9&l&m--------------"
+		else if arg-1 is "game":
+			send "&9&l&m--------------&9&l< &b&lDeathSwap &9&l>&9&l&m--------------"
+			send ""
+			if {deathswap::intervalmode} is "standard":
+				send "&f&lSwap Interval <command:/deathswap interval -1>&c&l[-1]<reset> &e&l%{deathswap::interval}% &e&lMins <command:/deathswap interval 1>&c&l[+1]<reset> <command:/deathswap intervalmode shuffled>&2&l[Shuffle Interval]<reset>"
+			else:
+				send "&f&lSwap Interval &2&lShuffled <command:/deathswap intervalmode standard>&d&l[Standard Interval]<reset>"
+				send "&7- &c&lMinimum Interval <command:/deathswap mininterval -1>&c&l[-1]<reset> &e&l%{deathswap::mininterval}% &e&lMins <command:/deathswap mininterval 1>&c&l[+1]<reset>"
+				send "&7- &a&lMaximum Interval <command:/deathswap maxinterval -1>&c&l[-1]<reset> &e&l%{deathswap::maxinterval}% &e&lMins <command:/deathswap maxinterval 1>&c&l[+1]<reset>"
+				send ""
+			if {deathswap::victory} is "lastone":
+				send "&f&lVictory Conditions &c&l[<command:/deathswap victory lastone> &A&lLastOneStanding <reset>&8/ <command:/deathswap victory killscore>&7&lKillScore <reset>&c&l]"
+			else if {deathswap::victory} is "killscore":
+				send "&f&lVictory Conditions &c&l[<command:/deathswap victory lastone> &7&lLastOneStanding <reset>&8/ <command:/deathswap victory killscore>&a&lKillScore <reset>&c&l]"
+				send "&7- &c&lMatch Point <command:/deathswap matchpoint -1>&c&l[-1]<reset> &e&l%{deathswap::matchpoint}% &e&lpts <command:/deathswap matchpoint 1>&c&l[+1]<reset>"
+			send ""
+			send "<command:/deathswap start>&a&l[Start Game]<reset>"
+			send ""
+			send "&9&l&m--------------&9&l< &b&lDeathSwap &9&l>&9&l&m--------------"
+		else if arg-1 is "pair":
+			send "&9&l&m--------------&9&l< &b&lDeathSwap &9&l>&9&l&m--------------"
+			send ""
+			set {_n} to 0
+			loop {deathswap.pairs::*}:
+				send "&c&l%{deathswap.pair.%loop-value%::1}% &c&l<--> %{deathswap.pair.%loop-value%::2}% &7[%loop-value%&7]" 
+				add 1 to {_n}
+			send "&7%{_n}% &7Pairs found."
+			if {_n} is more than 0:
+				send "&4If you want to delete a pair: &4&l/deathswap deletepair <ID>"
+				send "&7ID is random number, surrounded by []."
+			send "<command:/deathswap newpair>&a&l[Make a new Pair]<reset>"
+			send "&9&l&m--------------&9&l< &b&lDeathSwap &9&l>&9&l&m--------------"
+		else if arg-1 is "deletepair":
+			remove arg-2 parsed as integer from {deathswap.pairs::*}
+			play sound "ui.button.click" to player
+			execute player command "/deathswap pair"
+		else if arg-1 is "intervalmode":
+			set {deathswap::intervalmode} to arg-2
+			play sound "ui.button.click" to player
+			execute player command "/deathswap game"
+		else if arg-1 is "interval":
+			set {_a} to arg-2 parsed as integer
+			add {_a} to {deathswap::interval}
+			play sound "block.note_block.pling" with pitch 2 to player
+			execute player command "/deathswap game"
+		else if arg-1 is "mininterval":
+			set {_a} to arg-2 parsed as integer
+			add {_a} to {deathswap::mininterval}
+			play sound "block.note_block.pling" with pitch 2 to player
+			execute player command "/deathswap game"
+		else if arg-1 is "maxinterval":
+			set {_a} to arg-2 parsed as integer
+			add {_a} to {deathswap::maxinterval}
+			play sound "block.note_block.pling" with pitch 2 to player
+			execute player command "/deathswap game"
+		else if arg-1 is "victory":
+			set {deathswap::victory} to arg-2
+			play sound "block.note_block.pling" with pitch 2 to player
+			execute player command "/deathswap game"
+		else if arg-1 is "matchpoint":
+			set {_a} to arg-2 parsed as integer
+			add {_a} to {deathswap::matchpoint}
+			play sound "block.note_block.pling" with pitch 2 to player
+			execute player command "/deathswap game"
+		else if arg-1 is "newpair":
+			send "&9&l&m--------------&9&l< &b&lDeathSwap &9&l>&9&l&m--------------"
+			send "&fChoose one using /deathswap-p"
+			send "&eExample: /deathswap-p Yeahn"
+			send "&9&l&m--------------&9&l< &b&lDeathSwap &9&l>&9&l&m--------------"
+			set {choosemore::%player%} to true
+		else if arg-1 is "start":
+			send "%nl%&b&l--- Game Start!!%nl%%nl%&fゲームが開始されました。%nl%" to all players
+			set {game} to true
+			if {deathswap::intervalmode} is "standard":
+				set {timer} to {deathswap::interval}
+			else if {deathswap::intervalmode} is "shuffled":
+				set {timer} to random integer between {deathswap::mininterval} and {deathswap::maxinterval}
+			loop all players:
+				set loop-player's gamemode to survival
+				clear loop-player's inventory
+				add loop-player to {players::*}
+				set {score::%loop-player%} to 0
+				teleport loop-player to spawn of loop-player's world
+				play sound "entity.wither.spawn" to loop-player
+on join:
+	set player's gamemode to adventure
+	teleport player to spawn of player's world
+every 1 minute:
+	{game} is true
+	remove 1 from {timer}
+	if {timer} is less than 1:
+		if {deathswap::intervalmode} is "standard":
+			set {timer} to {deathswap::interval}
+		else if {deathswap::intervalmode} is "shuffled":
+			set {timer} to random integer between {deathswap::mininterval} and {deathswap::maxinterval}
+		swap()
+	loop all players:
+		if {deathswap::victory} is "lastone":
+			send action bar "&e[&6DeathSwap&e] &7Players: &f%number of {players::*}%" to loop-player
+		else if {deathswap::victory} is "killscore":
+			send action bar "&e[&6DeathSwap&e] &7Your Score: &f%{score::%loop-player%}%" to loop-player
+			set {_mp} to {deathswap::matchpoint} - 1
+			if {score::%loop-player%} is more than {_mp}:
+				end(loop-player)
+function swap():
+	set {_n} to 10
+	loop 9 times:
+		send "&c&lSwapping in %{_n}%&c&l seconds!" to all players
+		remove 1 from {_n}
+		wait 1 second
+	send "&c&lSwapping in 1 second!" to all players
+	wait 1 second
+	loop {players::*}:
+		set {_loc::%loop-value%} to location of loop-value
+	loop {deathswap.pairs::*}:
+		teleport {deathswap.pair.%loop-value%::1} to {_loc::%{deathswap.pair.%loop-value%::2}%}
+		teleport {deathswap.pair.%loop-value%::2} to {_loc::%{deathswap.pair.%loop-value%::1}%}
+function end(winner: player):
+	delete {game}
+	loop all players:
+		teleport loop-player to location of {_winner}
+	send title "&6&l%{_winner}%" with subtitle "&fIS THE WINNER OF THIS GAME!!!" to all players for 5 seconds with fade in 1 second and fade out 1 second
+	play sound "ui.toast.challenge_complete" to all players
+	launch ball large coloured orange fading to yellow and white at {_winner}'s location with duration 1
+	wait 1 second
+	launch ball large coloured yellow fading to yellow and white at {_winner}'s location with duration 1
+	wait 1 second
+	launch ball large coloured purple fading to yellow and white at {_winner}'s location with duration 1
+	wait 1 second
+	launch ball large coloured green fading to yellow and white at {_winner}'s location with duration 1
+	wait 1 second
+	launch ball large coloured blue fading to yellow and white at {_winner}'s location with duration 1
+	wait 4 second
+	loop all players:
+		clear loop-player's inventory
+		set loop-player's gamemode to adventure
+		teleport loop-player to spawn of world "world"
+		play sound "entity.player.levelup" with pitch 0.5 to loop-player
+	
+on death:
+	{game} is true
+	if {deathswap::victory} is "lastone":
+		remove victim from {players::*}
+		if number of {players::*} is less than 2:
+			end({players::*})
+	else if {deathswap::victory} is "killscore":
+		loop {deathswap.pairs::*}:
+			if {deathswap.pair.%loop-value%::1} is victim:
+				add 1 to {score::%{deathswap.pair.%loop-value%::2}%}
+			else if {deathswap.pair.%loop-value%::2} is victim:
+				add 1 to {score::%{deathswap.pair.%loop-value%::1}%}
+		
+on damage:
+	attacker is a player
+	victim is a player
+	send "&e[&6DeathSwap&e] &fDeathSwap &7内での &c他人への攻撃 &7はできません。" to attacker
+on respawn:
+	{game} is true
+	if {players::*} does not contain player:
+		set player's gamemode to spectator
+command /deathswap-p <player>:
+	trigger:
+		if {choosemore::%player%} is true:
+			set {_a} to metadata value "pair" of player
+			if {_a} is set:
+				set {_num} to random integer between 1 and 100000000
+				add {_num} to {deathswap.pairs::*}
+				set {deathswap.pair.%{_num}%::1} to {_a}
+				set {deathswap.pair.%{_num}%::2} to arg-1
+				delete {choosemore::%player%}
+				play sound "block.note.pling" with pitch 2 to player
+				execute player command "/deathswap pair"
+			else:
+				set metadata value "pair" of player to arg-1
+				set {_a} to metadata value "pair" of player
+				send "&9&l&m--------------&9&l< &b&lDeathSwap &9&l>&9&l&m--------------"
+				send "&fChoose one &cmore &fusing /deathswap-p"
+				send "&eExample: /deathswap-p harup23"
+				send "&9&l&m--------------&9&l< &b&lDeathSwap &9&l>&9&l&m--------------"
+on load:
+	if {deathswap::first} is not set:
+		set {deathswap::first} to true
+		set {deathswap::intervalmode} to "standard"
+		set {deathswap::interval} to 5
+		set {deathswap::mininterval} to 1
+		set {deathswap::maxinterval} to 5
+		set {deathswap::victory} to "lastone"
+		send "&e[&6DeathSwap&e] &7Welcome to &fDeathSwap&7!" to ops
+	send "&e[&6DeathSwap&e] &aLoaded" to console
